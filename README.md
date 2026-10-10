@@ -1,60 +1,98 @@
 # GPU Dive
 
-一个不带站点导航或教学面板的 GPU 逐层探索组件。全英文 UI，无需依赖、构建工具、服务器或联网。
+GPU Dive is a small interactive visual explainer for exploring the hardware and execution hierarchy of an NVIDIA GPU.
 
-## 直接打开
+It starts with an ASUS Dual GeForce RTX 4070 and lets you progressively look inside the card:
 
-双击 `index.html`。产品图片已内嵌，离线可用。
-
-- 点击显卡 → 电路板 → GPU → SM → 执行分区 → CUDA Core。
-- SM 底部橙色分支：示例驻留 Block → Warp → Thread。
-- 缓存、显存、寄存器、Tensor Core、RT Core 可以分别查看。
-- 左上角返回、层级路径或 Esc 返回上层；右上角可回到显卡或全屏。
-- 内部只表示架构关系，不是实际 PCB / die floorplan；绿色是物理硬件，橙色是示例逻辑任务。
-- 最深层是功能单元或线程状态，不是晶体管电路。未包含任务运行模拟。
-
-## 嵌入自己的网页
-
-将 `gpu-dive.js` 放到网站目录，然后加入：
-
-```html
-<gpu-dive style="display:block; width:100%; height:760px; border-radius:20px; overflow:hidden;"></gpu-dive>
-<script src="/your-path/gpu-dive.js"></script>
+```text
+Graphics card → PCB → GPU chip → SM → Execution partition → CUDA core
+                                      └→ Block → Warp → Thread
 ```
 
-组件使用 Shadow DOM，内部样式与外部页面隔离。它会根据组件容器宽度切换为纵向布局。建议至少 440px 高；桌面 700–850px 高。
+The diagram is intentionally simplified for teaching and exploration. Green elements represent physical hardware. Amber elements represent example logical work that can reside on the hardware.
 
-`embed.html` 是一个可直接打开的嵌入示例。如果你的网页框架只支持 iframe，也可以直接嵌入 `index.html`：
+## Live demo
+
+After enabling GitHub Pages for this repository, open:
+
+```text
+https://YOUR-GITHUB-USERNAME.github.io/gpu-dive/
+```
+
+Replace `YOUR-GITHUB-USERNAME` with your GitHub username.
+
+The page works as a standalone static website and does not require a server, database, build step, or external JavaScript library.
+
+## How to use it
+
+- Click the graphics card to enter the PCB view.
+- Click the GPU chip to inspect the GPU and its SMs.
+- Click an SM to inspect its execution partitions, caches, shared memory, and example resident blocks.
+- Follow a Block to its Warps and then to individual Threads.
+- Use the breadcrumb trail, the back button, or `Esc` to move up one level.
+- Use the home button to return to the graphics card.
+- Use the full-screen button for presentations.
+
+## Run locally
+
+Download or clone the repository, then open `index.html` directly in a browser. No installation is required.
+
+You can also serve the folder with any static web server:
+
+```bash
+python3 -m http.server
+```
+
+Then open `http://localhost:8000`.
+
+## Embed in another website
+
+Copy `gpu-dive.js` into your website and add the custom element:
 
 ```html
-<iframe src="/gpu-dive/index.html" title="GPU Dive"
+<gpu-dive
+  style="display:block; width:100%; height:760px; border-radius:20px; overflow:hidden;">
+</gpu-dive>
+<script src="/path/to/gpu-dive.js"></script>
+```
+
+The component uses Shadow DOM, so its internal styles are isolated from the host page. It automatically switches to a vertical layout on narrow screens.
+
+An iframe is also possible:
+
+```html
+<iframe
+  src="https://YOUR-GITHUB-USERNAME.github.io/gpu-dive/"
+  title="GPU Dive"
   style="width:100%; height:760px; border:0; border-radius:20px;"
-  allow="fullscreen"></iframe>
+  allow="fullscreen">
+</iframe>
 ```
 
-## 与网站交互（可选）
+## Optional change event
+
+The component emits a `gpu-dive:change` event whenever the current level changes:
 
 ```js
-document.querySelector('gpu-dive').addEventListener('gpu-dive:change', event => {
-  console.log(event.detail.level, event.detail.path);
+document.querySelector('gpu-dive').addEventListener('gpu-dive:change', (event) => {
+  console.log(event.detail.level);
+  console.log(event.detail.path);
 });
 ```
 
-## 修改源码
+## Scope and accuracy
 
-- `src/gpu-dive.template.js`：可读的组件源码；`__CARD_DATA__` 由打包脚本填入。
-- `assets/card.png`：ASUS 官方产品图。
-- `build.py`：使用 Python 3 标准库生成 `gpu-dive.js` 和独立 `index.html`。
-- 修改后在这个目录运行 `python3 build.py`。
+This is an educational visualization, not an exact PCB photograph or silicon floorplan. The SM layout, cache arrays, memory cells, execution partitions, and resident blocks are schematic. The shown RTX 4070 has 5,888 CUDA cores; the visualization uses 46 enabled SMs with 128 CUDA cores per SM as an illustrative Ada-based organization.
 
-所有任务编号、存储单元排列、PCB 布局和逻辑驻留示例均为示意。4070 的 5,888 CUDA cores 与 Ada 每 SM 128 个 CUDA cores 对应 46 个启用的 SM。L1 和 Shared Memory 在 Ada 中共享物理存储资源，UI 按访问语义分开展示。
+The UI separates L1 cache, Shared Memory, L2 cache, registers, and Global Memory by their programming and hardware roles. On Ada GPUs, L1 cache and Shared Memory can share a physical storage pool even though they are presented separately here for clarity.
 
-## 资料与图像来源
+## Sources
 
-- 产品图与规格：[ASUS Dual GeForce RTX 4070](https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070-12g/)
-- 产品图原地址：https://dlcdnwebimgs.asus.com/gain/4670e704-97f5-4d00-9d17-e59593ba3dd3/
-- [NVIDIA Ada architecture whitepaper](https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf)
+- [ASUS Dual GeForce RTX 4070](https://www.asus.com/motherboards-components/graphics-cards/dual/dual-rtx4070-12g/)
+- [NVIDIA Ada GPU Architecture](https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf)
 - [NVIDIA Ada Tuning Guide](https://docs.nvidia.com/cuda/ada-tuning-guide/)
-- [CUDA Programming Model](https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html)
+- [NVIDIA CUDA Programming Model](https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/programming-model.html)
 
-这些来源也可通过界面右上角的信息按钮打开。产品图保留原有品牌标识。
+## License and image attribution
+
+The ASUS product image is used as an attributed reference image for this educational demo. Check the original ASUS page for its product-image terms before redistributing the image in another project.
