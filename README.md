@@ -16,7 +16,7 @@ The diagram is intentionally simplified for teaching and exploration. Green elem
 After enabling GitHub Pages for this repository, open:
 
 ```text
-https://poetratume.github.io/gpu-dive/
+https://poetratume.github.io/gpu-drive/
 ```
 
 The page works as a standalone static website and does not require a server, database, build step, or external JavaScript library.
